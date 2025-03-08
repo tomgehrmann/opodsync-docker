@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Get latest program tag from source
         id: get_latest_program_tag
-        uses: lhstrh/action-repo-semver@v1.2.1
+        uses: lhstrh/action-repo-semver@23839f38b149db8715f21dbd38e6dde122817222
         with:
           repo: ${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}
 

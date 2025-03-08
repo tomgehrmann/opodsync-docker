@@ -27,7 +27,7 @@ jobs:
       # Compare version tags
       - name: Get latest program tag from source
         id: get_latest_program_tag
-        uses: lhstrh/action-repo-semver@v1.2.1
+        uses: lhstrh/action-repo-semver@23839f38b149db8715f21dbd38e6dde122817222
         with:
           repo: ${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}
 
@@ -54,7 +54,7 @@ jobs:
 
       - name: Compare version tags
         id: comparison
-        uses: YunaBraska/semver-info-action@main
+        uses: YunaBraska/semver-info-action@2cdb5ed6f5d929629308eee9537d1ca5f92ea33d
         with:
           semver-a: ${{ steps.get_latest_program_tag.outputs.tag }}
           semver-b: ${{ steps.get_latest_image_tag.outputs.latest_tag }}
