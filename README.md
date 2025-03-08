@@ -10,6 +10,25 @@ Automated container image builds for [oPodSync](https://github.com/kd2org/opodsy
 A compose file is provided.
 
 ```yaml:compose.yaml
+services:
+  opodsync:
+    container_name: opodsync
+    image: ghcr.io/tomgehrmann/opodsync:latest
+    restart: on-failure:5
+    user: ${PUID:-1000}:${PGID:-1000}
+    security_opt:
+      - no-new-privileges
+      # - "apparmor=docker-opodsync" # optional hardening with AppArmor
+    read_only: true
+    mem_limit: 500MB
+    cpus: 0.25
+    cap_drop:
+      - ALL
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/var/www/server/data:rw
+
 ```
 
 ### Notes
