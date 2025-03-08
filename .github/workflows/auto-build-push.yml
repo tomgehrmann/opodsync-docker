@@ -1,0 +1,115 @@
+name: Auto Build and Push
+
+on:
+  workflow_dispatch: 
+  schedule:
+    - cron: '0 0 * * *'
+
+env:
+  REPO_OWNER: kd2org
+  REPO_NAME: opodsync
+  CONTAINER_REGISTRY: ghcr.io
+  IMAGE_URI: ghcr.io/${{ github.repository_owner }}/opodsync
+
+jobs:
+  compare:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: read
+
+    outputs:
+      is_new_version: ${{ steps.comparison.outputs.is_greater_a }}
+      is_rc_change: ${{ steps.comparison.outputs.is_rc_change }}
+      new_version_tag: ${{ steps.get_latest_program_tag.outputs.tag }}
+
+    steps:
+      # Compare version tags
+      - name: Get latest program version
+        id: get_latest_program_tag
+        uses: lhstrh/action-repo-semver@v1.2.1
+        with:
+          repo: ${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}
+
+      - name: Get latest tag from GHCR
+        id: get_latest_image_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Prerequisite: Package in repo must exist
+        # 1. Fetch all tags for the GHCR package
+        # 2. Check if any tags were found
+        # 3. Strip everything before the first digit for sorting purposes and sort by semantic versioning
+        # 4. Output the latest tag (as originally stored in the registry)
+        run: |
+          tags=$(gh api /user/packages/container/${REPO_NAME}/versions --jq '.[].metadata.container.tags[]')
+
+          if [ -z "$tags" ]; then
+            latest_tag="0.0.1"
+          else
+            sorted_tags=$(echo "$tags" | sed 's/^[^0-9]*//' | sort -V)
+            latest_tag=$(echo "$tags" | grep -E "^${sorted_tags}$" | tail -n 1)
+          fi
+          echo "Latest tag: $latest_tag"
+          echo "latest_tag=$latest_tag" >> "$GITHUB_OUTPUT"
+
+      - name: Compare latest versions
+        id: comparison
+        uses: YunaBraska/semver-info-action@main
+        with:
+          semver-a: ${{ steps.get_latest_program_tag.outputs.tag }}
+          semver-b: ${{ steps.get_latest_image_tag.outputs.latest_tag }}
+    
+  build-push:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
+    needs: [compare]
+    if: needs.compare.outputs.is_new_version == 'true' && needs.compare.outputs.is_rc_change == 'false'
+
+    steps:
+      - name: Checkout ${{ env.REPO_NAME }}
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}
+          ref: ${{ needs.compare.outputs.new_version_tag }}
+      - name: Checkout ${{ github.repository }}
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          path: docker
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.CONTAINER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get Metadata from Repo
+        id: get_repo_metadata
+        uses: docker/metadata-action@v5
+        with:
+          annotations: |
+            org.opencontainers.image.title=oPodSync
+            org.opencontainers.image.description=oPodSync is a minimalist GPodder-compatible podcast synchronization server
+            org.opencontainers.image.source=https://github.com/${{ env.REPO_OWNER }}/${{ env.REPO_NAME}}
+            org.opencontainers.image.version=${{ needs.compare.outputs.new_version_tag }}
+          images: ${{ env.IMAGE_URI }}
+          tags: type=semver,pattern={{raw}},value=${{ needs.compare.outputs.new_version_tag }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64,linux/arm64
+          context: .
+          file: docker/Dockerfile
+          push: true
+          annotations: ${{ steps.get_repo_metadata.outputs.annotations }}
+          tags: ${{ steps.get_repo_metadata.outputs.tags }}

@@ -1,0 +1,19 @@
+name: Code Embedder
+
+on: push
+
+permissions:
+  contents: write
+
+jobs:
+  code_embedder:
+    name: "Code embedder"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Code Embedder
+        uses: kvankova/code-embedder@9e24446d895f07129ad1301b39fc78e354079f56
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
