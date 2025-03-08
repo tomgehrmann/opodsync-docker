@@ -17,14 +17,14 @@ jobs:
       packages: write
 
     steps:
-      - name: Get latest program version
+      - name: Get latest program tag from source
         id: get_latest_program_tag
         uses: lhstrh/action-repo-semver@v1.2.1
         with:
           repo: ${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}
 
       # Build
-      - name: Checkout ${{ env.REPO_NAME }}
+      - name: Checkout ${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}
         uses: actions/checkout@v4
         with:
           repository: ${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}
@@ -42,8 +42,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get Metadata from Repo
-        id: get_repo_metadata
+      - name: Prepare Metadata
+        id: prepare_metadata
         uses: docker/metadata-action@v5
         with:
           annotations: |
@@ -67,5 +67,5 @@ jobs:
           context: .
           file: docker/Dockerfile
           push: true
-          annotations: ${{ steps.get_repo_metadata.outputs.annotations }}
-          tags: ${{ steps.get_repo_metadata.outputs.tags }}
+          annotations: ${{ steps.prepare_metadata.outputs.annotations }}
+          tags: ${{ steps.prepare_metadata.outputs.tags }}

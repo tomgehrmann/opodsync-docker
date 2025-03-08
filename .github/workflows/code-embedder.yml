@@ -7,7 +7,7 @@ permissions:
 
 jobs:
   code_embedder:
-    name: "Code embedder"
+    name: "Code Embedder"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
