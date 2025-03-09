@@ -19,7 +19,7 @@ services:
     security_opt:
       - no-new-privileges
       # - "apparmor=docker-opodsync" # optional hardening with AppArmor
-    read_only: true
+    # read_only: true # needs evaluation: can't login if enabled
     mem_limit: 500MB
     cpus: 0.25
     cap_drop:
