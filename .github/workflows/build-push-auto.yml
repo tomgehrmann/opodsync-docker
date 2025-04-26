@@ -38,16 +38,15 @@ jobs:
         # Prerequisite: Package in repo must exist
         # 1. Fetch all tags for the GHCR package
         # 2. Check if any tags were found
-        # 3. Strip everything before the first digit for sorting purposes and sort by semantic versioning
-        # 4. Output the latest tag (as originally stored in the registry)
+        # 3. Strip everything before and after semver x.x.x and sort by semantic versioning
+        # 4. Output the latest tag
         run: |
           tags=$(gh api /user/packages/container/${REPO_NAME}/versions --jq '.[].metadata.container.tags[]')
 
           if [ -z "$tags" ]; then
             latest_tag="0.0.1"
           else
-            sorted_tags=$(echo "$tags" | sed 's/^[^0-9]*//' | sort -V)
-            latest_tag=$(echo "$tags" | grep -E "^${sorted_tags}$" | tail -n 1)
+            latest_tag=$(echo "$tags" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | sort -V | tail -n 1)
           fi
           echo "Latest tag: $latest_tag"
           echo "latest_tag=$latest_tag" >> "$GITHUB_OUTPUT"
