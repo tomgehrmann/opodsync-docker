@@ -33,9 +33,9 @@ services:
 
 ### Notes
 
-* Although the php dev server is used, apart from that basic best practices are being employed. Adjust the values to suit your setup.
+* Adjust the values to suit your setup.
 * The user of the application has the UID/GID `1000` by default. If you want to use another user, you need to define this explicitly in the compose file. In any case, be aware of file permissions.
 
 ## Contributions and Maintenance
-The builds are fully automated, so I will not be actively maintaining this.
+The builds are fully automated, I use them myself, but I don't actively monitor the health of the service.
 Contributions are welcome, but I cannot promise timely replies.
