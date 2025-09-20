@@ -47,7 +47,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: ${{ inputs.source_repo_owner }}/${{ inputs.source_repo_name }}
-          ref: ${{ inputs.new_version_tag }}
+          ref: ${{ inputs.source_version_tag }}
       - name: Checkout ${{ github.repository }}
         uses: actions/checkout@v5
         with:
