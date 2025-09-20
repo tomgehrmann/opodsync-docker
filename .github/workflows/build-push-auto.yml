@@ -106,7 +106,6 @@ jobs:
 
   # FIXME: Reusable workflow can't have an env variable evaluated before it is passed.
   # https://github.com/orgs/community/discussions/26671
-  # This is the dumbest shit I've done in a long time. 
   build-push-envs:
     runs-on: ubuntu-22.04
     needs: [compare]
