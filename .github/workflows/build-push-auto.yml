@@ -46,7 +46,7 @@ jobs:
         # 3. Strip everything before and after semver x.x.x and sort by semantic versioning
         # 4. Output the latest tag
         run: |
-          tags=$(gh api /user/packages/container/${IMAGE_NAME}/versions --jq '.[].metadata.container.tags[]')
+          tags=$(gh api "/user/packages/container/${IMAGE_NAME}/versions?per_page=100" --jq '.[].metadata.container.tags[]')
 
           if [ -z "$tags" ]; then
             latest_tag="0.0.1"
