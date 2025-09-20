@@ -1,5 +1,6 @@
+# Should only be used for initialization! Builds and pushes the source with the latest cleaned version tag verbatim (and latest and other production tags).
+# Does not consider base image updates, therefore will break image tags.
 name: Force Build and Push
-description: Should only be used for initialization! Builds and pushes the source with the latest cleaned version tag verbatim (and latest and other production tags). Does not consider base image updates, therefore will break image tags.
 
 on:
   workflow_dispatch: 
