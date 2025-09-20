@@ -68,7 +68,7 @@ jobs:
           annotations: |
             org.opencontainers.image.title=oPodSync
             org.opencontainers.image.description=oPodSync is a minimalist GPodder-compatible podcast synchronization server
-            org.opencontainers.image.source=https://${{ inputs.source_host }}/${{ inputs.source_repo_owner }}/${{ inputs.source_repo_name}}
+            org.opencontainers.image.source=https://${{ inputs.source_host }}/${{ inputs.source_repo_owner }}/${{ inputs.source_repo_name }}
             org.opencontainers.image.version=${{ inputs.new_version_tag }}
           images: ${{ inputs.image_uri }}
           tags: |
