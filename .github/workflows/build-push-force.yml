@@ -53,8 +53,8 @@ jobs:
       registry: ${{ needs.build-push-envs.outputs.image_registry }}
       image_uri: ${{ needs.build-push-envs.outputs.image_uri }}
       source_host: ${{ needs.build-push-envs.outputs.source_host }}
-      source_repo_owner: ${{ needs.build-push-envs.outputs.source_repo_owner}}
-      source_repo_name: ${{ needs.build-push-envs.outputs.source_repo_name}}
+      source_repo_owner: ${{ needs.build-push-envs.outputs.source_repo_owner }}
+      source_repo_name: ${{ needs.build-push-envs.outputs.source_repo_name }}
       source_version_tag: ${{ needs.get-tag.outputs.version_tag }}
       new_version_tag: ${{ needs.get-tag.outputs.version_tag }}
       is_production: true
