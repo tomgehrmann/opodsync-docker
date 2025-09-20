@@ -1,0 +1,94 @@
+name: Reusable Build and Push
+
+on:
+  workflow_call:
+    inputs:
+      registry:
+        required: true
+        type: string
+      new_version_tag:
+        required: true
+        type: string
+        description: Version tag for the image. Should have the format `major.minor.patch+base`, where `+base` optional and a simple counter for the base image starting at 0.
+      source_version_tag:
+        required: true
+        type: string
+        description: Version tag of the source release.
+      source_repo_owner:
+        required: true
+        type: string
+      source_repo_name:
+        required: true
+        type: string
+      source_host:
+        required: true
+        type: string
+        default: "github.com"
+        description: The FQDN of the service which hosts the source repository.
+      image_uri:
+        required: true
+        type: string
+      is_production:
+        required: false
+        type: boolean
+        default: false
+        description: If true, the latest tag, major.minor and major.minor.patch will be set too.
+
+      
+jobs:    
+  build-push:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout ${{ inputs.source_repo_owner }}/${{ inputs.source_repo_name }}
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ inputs.source_repo_owner }}/${{ inputs.source_repo_name }}
+          ref: ${{ inputs.new_version_tag }}
+      - name: Checkout ${{ github.repository }}
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ github.repository }}
+          path: docker
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ inputs.new_version_tag }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare Metadata
+        id: prepare_metadata
+        uses: docker/metadata-action@v5
+        with:
+          annotations: |
+            org.opencontainers.image.title=oPodSync
+            org.opencontainers.image.description=oPodSync is a minimalist GPodder-compatible podcast synchronization server
+            org.opencontainers.image.source=https://${{ inputs.source_host }}/${{ inputs.source_repo_owner }}/${{ inputs.source_repo_name}}
+            org.opencontainers.image.version=${{ inputs.new_version_tag }}
+          images: ${{ inputs.image_uri }}
+          tags: |
+            type=semver,pattern={{raw}},value=${{ inputs.new_version_tag }}
+            type=semver,pattern={{major}}.{{minor}}.{{patch}},value=${{ inputs.new_version_tag }},enable=${{ inputs.is_production }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.new_version_tag }},enable=${{ inputs.is_production }}
+            type=raw,value=latest,enable=${{ inputs.is_production }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64,linux/arm64
+          context: .
+          file: docker/Dockerfile
+          push: true
+          annotations: ${{ steps.prepare_metadata.outputs.annotations }}
+          tags: ${{ steps.prepare_metadata.outputs.tags }}

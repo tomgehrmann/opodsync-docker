@@ -6,10 +6,13 @@ on:
     - cron: '0 0 * * *'
 
 env:
-  REPO_OWNER: kd2org
-  REPO_NAME: opodsync
-  CONTAINER_REGISTRY: ghcr.io
-  IMAGE_URI: ghcr.io/${{ github.repository_owner }}/opodsync
+  SOURCE_HOST: github.com
+  SOURCE_REPO_OWNER: kd2org
+  SOURCE_REPO_NAME: opodsync
+  IMAGE_REGISTRY: ghcr.io
+  IMAGE_NAME: opodsync
+  IMAGE_URI: ghcr.io/${{ github.repository_owner }}/opodsync # must match IMAGE_REGISTRY and IMAGE_NAME
+  BASE_IMAGE: php:8-alpine # must be the base image from the dockerfile
 
 jobs:
   compare:
@@ -19,17 +22,19 @@ jobs:
       packages: read
 
     outputs:
-      is_new_version: ${{ steps.comparison.outputs.is_greater_a }}
-      is_rc_change: ${{ steps.comparison.outputs.is_rc_change }}
-      new_version_tag: ${{ steps.get_latest_program_tag.outputs.tag }}
+      is_new_version: ${{ steps.compare_tags.outputs.is_greater_a }}
+      is_stable: ${{ steps.compare_tags.outputs.is_stable_a }}
+      current_source_tag: ${{ steps.get_latest_source_tag.outputs.tag }}
+      new_image_tag: ${{ steps.get_new_image_tag.outputs.new_image_tag }}
+      is_new_base_image: ${{ steps.base_image_update_check.outputs.needs-updating }}
 
     steps:
       # Compare version tags
       - name: Get latest program tag from source
-        id: get_latest_program_tag
+        id: get_latest_source_tag
         uses: lhstrh/action-repo-semver@23839f38b149db8715f21dbd38e6dde122817222
         with:
-          repo: ${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}
+          repo: ${{ env.SOURCE_REPO_OWNER }}/${{ env.SOURCE_REPO_NAME }}
 
       - name: Get latest image tag from GHCR
         id: get_latest_image_tag
@@ -41,77 +46,103 @@ jobs:
         # 3. Strip everything before and after semver x.x.x and sort by semantic versioning
         # 4. Output the latest tag
         run: |
-          tags=$(gh api /user/packages/container/${REPO_NAME}/versions --jq '.[].metadata.container.tags[]')
+          tags=$(gh api /user/packages/container/${IMAGE_NAME}/versions --jq '.[].metadata.container.tags[]')
 
           if [ -z "$tags" ]; then
             latest_tag="0.0.1"
           else
-            latest_tag=$(echo "$tags" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | sort -V | tail -n 1)
+            latest_tag=$(echo "$tags" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(\+[0-9]+)?' | sort -V | tail -n 1)
           fi
           echo "Latest tag: $latest_tag"
-          echo "latest_tag=$latest_tag" >> "$GITHUB_OUTPUT"
+          echo "latest_tag_with_base_version=$latest_tag" >> "$GITHUB_OUTPUT"
+          echo "latest_tag_core=$(echo "$latest_tag" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+')" >> "$GITHUB_OUTPUT"
 
       - name: Compare version tags
-        id: comparison
-        uses: YunaBraska/semver-info-action@2cdb5ed6f5d929629308eee9537d1ca5f92ea33d
+        id: compare_tags
+        uses: YunaBraska/semver-info-action@9878bfb06b973865ed1ccfce66402c159cf3fa48
         with:
-          semver-a: ${{ steps.get_latest_program_tag.outputs.tag }}
-          semver-b: ${{ steps.get_latest_image_tag.outputs.latest_tag }}
-    
-  build-push:
+          semver-a: ${{ steps.get_latest_source_tag.outputs.current }}
+          semver-b: ${{ steps.get_latest_image_tag.outputs.latest_tag_core }}
+
+      - name: Check for Base Image Update
+        id: base_image_update_check
+        uses: lucacome/docker-image-update-checker@a233de0585661c019fb71f9601328db37051cc66
+        with:
+          base-image: ${{ env.BASE_IMAGE }}
+          image: ${{ env.IMAGE_URI }}:latest
+
+      - name: Output new Image Tag
+        id: get_new_image_tag
+        env:
+          CURRENT_IMAGE_TAG: ${{ steps.get_latest_image_tag.outputs.latest_tag }}
+          CURRENT_SOURCE_TAG: ${{ steps.get_latest_source_tag.outputs.current}}
+          IS_NEW_SOURCE_TAG: ${{ steps.compare_tags.outputs.is_greater_a}}
+          IS_NEW_SOURCE_TAG_STABLE: ${{ steps.compare_tags.outputs.is_stable_a }}
+          IS_NEW_IMAGE_BASE: ${{ steps.base_image_update_check.outputs.needs-updating }}
+        run: |
+            # Decide which tag to use for the new image
+            if [[ "$IS_NEW_PROGRAM_VERSION" == "true" && "$IS_NEW_PROGRAM_STABLE" == "true" ]]; then
+              new_image_tag="$CURRENT_SOURCE_TAG+0"
+            elif [[ "$IS_NEW_IMAGE_BASE" == "true" ]]; then
+              # Increment the last number after '+' in the tag, or add '+1' if not present
+              if [[ "$CURRENT_IMAGE_TAG" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(\+([0-9]+))?$ ]]; then
+                version_core="${BASH_REMATCH[1]}"
+                if [[ -n "${BASH_REMATCH[3]}" ]]; then
+                  new_base=$((BASH_REMATCH[3]+1))
+                  new_image_tag="${version_core}+${new_base}"
+                else
+                  new_image_tag="${version_core}+1"
+                fi
+              else
+                # If this is reached, many things have gone wrong in the pipeline
+                new_image_tag="${CURRENT_IMAGE_TAG}+1"
+              fi
+            else
+              # No update
+              new_image_tag="$CURRENT_IMAGE_TAG"
+            fi
+            echo "New image tag: $new_image_tag"
+            echo "new_image_tag=$new_image_tag" >> "$GITHUB_OUTPUT"
+
+  # FIXME: Reusable workflow can't have an env variable evaluated before it is passed.
+  # https://github.com/orgs/community/discussions/26671
+  # This is the dumbest shit I've done in a long time. 
+  build-push-envs:
     runs-on: ubuntu-22.04
+    needs: [compare]
+    if: (needs.compare.outputs.is_new_version == 'true' && needs.compare.outputs.is_stable == 'true') || needs.compare.outputs.is_new_base_image == 'true'
+    outputs:
+      image_uri: ${{ steps.env-to-output.outputs.image_uri }}
+      image_registry: ${{ steps.env-to-output.outputs.image_registry }}
+      source_host: ${{ steps.env-to-output.outputs.source_host }}
+      source_repo_owner: ${{ steps.env-to-output.outputs.source_repo_owner }}
+      source_repo_name: ${{ steps.env-to-output.outputs.source_repo_name }}
+    steps:
+      - name: Prepare environment variables for reusable build push workflow.
+        id: env-to-output
+        run: |
+          vars="IMAGE_REGISTRY IMAGE_URI SOURCE_HOST SOURCE_REPO_OWNER SOURCE_REPO_NAME"
+          for var in $vars; do
+            echo "${var,,}=${!var}" >> $GITHUB_OUTPUT
+          done
+
+  build-push:
+    uses: ./.github/workflows/reusable-build-push.yml
     permissions:
       contents: read
       packages: write
-    needs: [compare]
-    if: needs.compare.outputs.is_new_version == 'true' && needs.compare.outputs.is_rc_change == 'false'
+    needs: [build-push-envs, compare]
+    if: (needs.compare.outputs.is_new_version == 'true' && needs.compare.outputs.is_stable == 'true') || needs.compare.outputs.is_new_base_image == 'true'
+    with:
+      registry: ${{ needs.build-push-envs.outputs.image_registry }}
+      image_uri: ${{ needs.build-push-envs.outputs.image_uri }}
+      source_host: ${{ needs.build-push-envs.outputs.source_host }}
+      source_repo_owner: ${{ needs.build-push-envs.outputs.source_repo_owner}}
+      source_repo_name: ${{ needs.build-push-envs.outputs.source_repo_name}}
+      source_version_tag: ${{ needs.compare.outputs.current_source_tag }}
+      new_version_tag: ${{ needs.compare.outputs.new_image_tag }}
+      is_production: true
 
-    steps:
-      - name: Checkout ${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}
-          ref: ${{ needs.compare.outputs.new_version_tag }}
-      - name: Checkout ${{ github.repository }}
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.repository }}
-          path: docker
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.CONTAINER_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Prepare Metadata
-        id: prepare_metadata
-        uses: docker/metadata-action@v5
-        with:
-          annotations: |
-            org.opencontainers.image.title=oPodSync
-            org.opencontainers.image.description=oPodSync is a minimalist GPodder-compatible podcast synchronization server
-            org.opencontainers.image.source=https://github.com/${{ env.REPO_OWNER }}/${{ env.REPO_NAME}}
-            org.opencontainers.image.version=${{ needs.compare.outputs.new_version_tag }}
-          images: ${{ env.IMAGE_URI }}
-          tags: type=semver,pattern={{raw}},value=${{ needs.compare.outputs.new_version_tag }}
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          platforms: linux/amd64,linux/arm64
-          context: .
-          file: docker/Dockerfile
-          push: true
-          annotations: ${{ steps.prepare_metadata.outputs.annotations }}
-          tags: ${{ steps.prepare_metadata.outputs.tags }}
 
   workflow-keepalive:
     if: github.event_name == 'schedule'
