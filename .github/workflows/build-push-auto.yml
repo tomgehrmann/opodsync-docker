@@ -84,7 +84,7 @@ jobs:
           IS_NEW_IMAGE_BASE: ${{ steps.base_image_update_check.outputs.needs-updating }}
         run: |
             # Decide which tag to use for the new image
-            if [[ "$IS_NEW_PROGRAM_VERSION" == "true" && "$IS_NEW_PROGRAM_STABLE" == "true" ]]; then
+            if [[ "$IS_NEW_SOURCE_TAG" == "true" && "$IS_NEW_SOURCE_TAG_STABLE" == "true" ]]; then
               new_image_tag="$CURRENT_SOURCE_TAG+0"
             elif [[ "$IS_NEW_IMAGE_BASE" == "true" ]]; then
               # Increment the last number after '+' in the tag, or add '+1' if not present
