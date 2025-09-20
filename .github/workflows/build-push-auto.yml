@@ -77,7 +77,7 @@ jobs:
       - name: Output new Image Tag
         id: get_new_image_tag
         env:
-          CURRENT_IMAGE_TAG: ${{ steps.get_latest_image_tag.outputs.latest_tag }}
+          CURRENT_IMAGE_TAG: ${{ steps.get_latest_image_tag.outputs.latest_tag_with_base_version }}
           CURRENT_SOURCE_TAG: ${{ steps.get_latest_source_tag.outputs.current}}
           IS_NEW_SOURCE_TAG: ${{ steps.compare_tags.outputs.is_greater_a}}
           IS_NEW_SOURCE_TAG_STABLE: ${{ steps.compare_tags.outputs.is_stable_a }}
