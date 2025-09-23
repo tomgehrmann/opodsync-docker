@@ -60,7 +60,7 @@ jobs:
           if [ -z "$tags" ]; then
             latest_tag="0.0.1"
           else
-            latest_tag=$(echo "$tags" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(\+[0-9]+)?' | sort -V | tail -n 1)
+            latest_tag=$(echo "$tags" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(_[0-9]+)?' | sort -V | tail -n 1)
           fi
           echo "Latest tag: $latest_tag"
           echo "latest_tag_with_base_version=$latest_tag" >> "$GITHUB_OUTPUT"
@@ -91,20 +91,20 @@ jobs:
         run: |
             # Decide which tag to use for the new image
             if [[ "$IS_NEW_SOURCE_TAG" == "true" && "$IS_NEW_SOURCE_TAG_STABLE" == "true" ]]; then
-              new_image_tag="$CURRENT_SOURCE_TAG+0"
+              new_image_tag="${CURRENT_SOURCE_TAG}_0"
             elif [[ "$IS_NEW_IMAGE_BASE" == "true" ]]; then
-              # Increment the last number after '+' in the tag, or add '+1' if not present
-              if [[ "$CURRENT_IMAGE_TAG" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(\+([0-9]+))?$ ]]; then
+              # Increment the last number after '_' in the tag, or add '_1' if not present
+              if [[ "$CURRENT_IMAGE_TAG" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(_([0-9]+))?$ ]]; then
                 version_core="${BASH_REMATCH[1]}"
                 if [[ -n "${BASH_REMATCH[3]}" ]]; then
                   new_base=$((BASH_REMATCH[3]+1))
-                  new_image_tag="${version_core}+${new_base}"
+                  new_image_tag="${version_core}_${new_base}"
                 else
-                  new_image_tag="${version_core}+1"
+                  new_image_tag="${version_core}_1"
                 fi
               else
                 # If this is reached, many things have gone wrong in the pipeline
-                new_image_tag="${CURRENT_IMAGE_TAG}+1"
+                new_image_tag="${CURRENT_IMAGE_TAG}_1"
               fi
             else
               # No update
