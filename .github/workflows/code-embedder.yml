@@ -1,6 +1,9 @@
 name: Code Embedder
 
-on: push
+on:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: write
