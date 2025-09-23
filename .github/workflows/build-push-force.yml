@@ -1,0 +1,61 @@
+# Should only be used for initialization! Builds and pushes the source with the latest cleaned version tag verbatim (and latest and other production tags).
+# Does not consider base image updates, therefore will break image tags.
+name: Force Build and Push
+
+on:
+  workflow_dispatch: 
+
+env:
+  SOURCE_HOST: github.com
+  SOURCE_REPO_OWNER: kd2org
+  SOURCE_REPO_NAME: opodsync
+  IMAGE_REGISTRY: ghcr.io
+  IMAGE_NAME: opodsync
+  IMAGE_URI: ghcr.io/${{ github.repository_owner }}/opodsync # must match IMAGE_REGISTRY and IMAGE_NAME
+
+jobs:
+  get-tag:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    outputs:
+      version_tag: ${{ steps.get_latest_program_tag.outputs.current }}
+    steps:
+      - name: Get latest program tag from source
+        id: get_latest_program_tag
+        uses: lhstrh/action-repo-semver@23839f38b149db8715f21dbd38e6dde122817222
+        with:
+          repo: ${{ env.SOURCE_REPO_OWNER }}/${{ env.SOURCE_REPO_NAME }}
+
+  build-push-envs:
+    runs-on: ubuntu-22.04
+    outputs:
+      image_uri: ${{ steps.env-to-output.outputs.image_uri }}
+      image_registry: ${{ steps.env-to-output.outputs.image_registry }}
+      source_host: ${{ steps.env-to-output.outputs.source_host }}
+      source_repo_owner: ${{ steps.env-to-output.outputs.source_repo_owner }}
+      source_repo_name: ${{ steps.env-to-output.outputs.source_repo_name }}
+    steps:
+      - name: Prepare environment variables for reusable build push workflow.
+        id: env-to-output
+        run: |
+          vars="IMAGE_REGISTRY IMAGE_URI SOURCE_HOST SOURCE_REPO_OWNER SOURCE_REPO_NAME"
+          for var in $vars; do
+            echo "${var,,}=${!var}" >> $GITHUB_OUTPUT
+          done
+
+  build-push:
+    uses: ./.github/workflows/reusable-build-push.yml
+    needs: [build-push-envs, get-tag]
+    permissions:
+      contents: read
+      packages: write
+    with:
+      registry: ${{ needs.build-push-envs.outputs.image_registry }}
+      image_uri: ${{ needs.build-push-envs.outputs.image_uri }}
+      source_host: ${{ needs.build-push-envs.outputs.source_host }}
+      source_repo_owner: ${{ needs.build-push-envs.outputs.source_repo_owner }}
+      source_repo_name: ${{ needs.build-push-envs.outputs.source_repo_name }}
+      source_version_tag: ${{ needs.get-tag.outputs.version_tag }}
+      new_version_tag: ${{ needs.get-tag.outputs.version_tag }}
+      is_production: true
