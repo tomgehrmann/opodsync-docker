@@ -91,27 +91,37 @@ jobs:
         run: |
             # Decide which tag to use for the new image
             if [[ "$IS_NEW_SOURCE_TAG" == "true" && "$IS_NEW_SOURCE_TAG_STABLE" == "true" ]]; then
-              new_image_tag="${CURRENT_SOURCE_TAG}_0"
+              new_image_tag="${CURRENT_SOURCE_TAG}"
+              new_base=1
             elif [[ "$IS_NEW_IMAGE_BASE" == "true" ]]; then
               # Increment the last number after '_' in the tag, or add '_1' if not present
               if [[ "$CURRENT_IMAGE_TAG" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(_([0-9]+))?$ ]]; then
                 version_core="${BASH_REMATCH[1]}"
                 if [[ -n "${BASH_REMATCH[3]}" ]]; then
                   new_base=$((BASH_REMATCH[3]+1))
-                  new_image_tag="${version_core}_${new_base}"
+                  new_image_tag="${version_core}"
                 else
-                  new_image_tag="${version_core}_1"
+                  new_base=1
+                  new_image_tag="${version_core}"
                 fi
               else
                 # If this is reached, many things have gone wrong in the pipeline
-                new_image_tag="${CURRENT_IMAGE_TAG}_1"
+                new_image_tag="${CURRENT_IMAGE_TAG}"
+                new_base=1
               fi
             else
               # No update
               new_image_tag="$CURRENT_IMAGE_TAG"
+              new_base=""
             fi
             echo "New image tag: $new_image_tag"
             echo "new_image_tag=$new_image_tag" >> "$GITHUB_OUTPUT"
+            echo "New suffix: $new_base"
+            if [[ -n "$new_base" ]]; then
+              echo "new_image_tag_suffix=_$new_base" >> "$GITHUB_OUTPUT"
+            else
+              echo "new_image_tag_suffix=" >> "$GITHUB_OUTPUT"
+            fi
 
   # FIXME: Reusable workflow can't have an env variable evaluated before it is passed.
   # https://github.com/orgs/community/discussions/26671
@@ -128,6 +138,7 @@ jobs:
     steps:
       - name: Prepare environment variables for reusable build push workflow.
         id: env-to-output
+        shell: bash
         run: |
           vars="IMAGE_REGISTRY IMAGE_URI SOURCE_HOST SOURCE_REPO_OWNER SOURCE_REPO_NAME"
           for var in $vars; do

@@ -9,7 +9,11 @@ on:
       new_version_tag:
         required: true
         type: string
-        description: Version tag for the image. Should have the format `major.minor.patch_base`, where `_base` is optional and a simple counter for the base image updates starting at 0.
+        description: Version tag for the image. Should have the format `major.minor.patch`. The `_base` is in the suffix.
+      new_version_tag_suffix:
+        required: false
+        type: string
+        description: Suffix for the image tag. It is a simple counter for the base image updates starting at 0.
       source_version_tag:
         required: true
         type: string
@@ -72,9 +76,9 @@ jobs:
             org.opencontainers.image.version=${{ inputs.new_version_tag }}
           images: ${{ inputs.image_uri }}
           tags: |
-            type=semver,pattern={{raw}},value=${{ inputs.new_version_tag }}
-            type=semver,pattern={{major}}.{{minor}}.{{patch}},value=${{ inputs.new_version_tag }},enable=${{ inputs.is_production }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.new_version_tag }},enable=${{ inputs.is_production }}
+            type=semver,pattern={{raw}},value=${{ inputs.new_version_tag }},suffix=${{ inputs.new_version_tag_suffix }}
+            type=semver,pattern={{major}}.{{minor}}.{{patch}},value=${{ inputs.new_version_tag }},suffix=${{ inputs.new_version_tag_suffix }},enable=${{ inputs.is_production }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.new_version_tag }},suffix=${{ inputs.new_version_tag_suffix }},enable=${{ inputs.is_production }}
             type=raw,value=latest,enable=${{ inputs.is_production }}
 
       - name: Set up QEMU
