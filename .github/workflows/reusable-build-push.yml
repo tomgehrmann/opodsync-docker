@@ -77,8 +77,8 @@ jobs:
           images: ${{ inputs.image_uri }}
           tags: |
             type=semver,pattern={{raw}},value=${{ inputs.new_version_tag }},suffix=${{ inputs.new_version_tag_suffix }}
-            type=semver,pattern={{major}}.{{minor}}.{{patch}},value=${{ inputs.new_version_tag }},suffix=${{ inputs.new_version_tag_suffix }},enable=${{ inputs.is_production }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.new_version_tag }},suffix=${{ inputs.new_version_tag_suffix }},enable=${{ inputs.is_production }}
+            type=semver,pattern={{major}}.{{minor}}.{{patch}},value=${{ inputs.new_version_tag }},enable=${{ inputs.is_production }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.new_version_tag }},enable=${{ inputs.is_production }}
             type=raw,value=latest,enable=${{ inputs.is_production }}
 
       - name: Set up QEMU
