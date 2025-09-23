@@ -46,10 +46,16 @@ jobs:
         # 3. Strip everything before and after semver x.x.x and sort by semantic versioning
         # 4. Output the latest tag
         run: |
+          set -e
+
           tags=$(gh api \
-                  -H "Accept: application/vnd.github+json" \
-                  -H "X-GitHub-Api-Version: 2022-11-28" \
-                  "/user/packages/container/${IMAGE_NAME}/versions?per_page=100" --jq '.[].metadata.container.tags[]')
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            --paginate \
+            "/user/packages/container/${IMAGE_NAME}/versions?per_page=100" --jq '.[].metadata.container.tags[]') || {
+              echo "Failed to fetch tags from GHCR API"
+              exit 1
+            }
 
           if [ -z "$tags" ]; then
             latest_tag="0.0.1"
