@@ -9,7 +9,7 @@ on:
       new_version_tag:
         required: true
         type: string
-        description: Version tag for the image. Should have the format `major.minor.patch_base`, where `_base` optional and a simple counter for the base image updates starting at 0.
+        description: Version tag for the image. Should have the format `major.minor.patch_base`, where `_base` is optional and a simple counter for the base image updates starting at 0.
       source_version_tag:
         required: true
         type: string
