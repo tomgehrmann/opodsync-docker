@@ -26,6 +26,7 @@ jobs:
       is_stable: ${{ steps.compare_tags.outputs.is_stable_a }}
       current_source_tag: ${{ steps.get_latest_source_tag.outputs.tag }}
       new_image_tag: ${{ steps.get_new_image_tag.outputs.new_image_tag }}
+      new_image_tag_suffix: $${{ steps.get_latest_image_tag.outputs.new_image_tag_suffix }}
       is_new_base_image: ${{ steps.base_image_update_check.outputs.needs-updating }}
 
     steps:
@@ -160,6 +161,7 @@ jobs:
       source_repo_name: ${{ needs.build-push-envs.outputs.source_repo_name }}
       source_version_tag: ${{ needs.compare.outputs.current_source_tag }}
       new_version_tag: ${{ needs.compare.outputs.new_image_tag }}
+      new_version_tag_suffix: $${{ needs.compare.outputs.new_image_tag_suffix }}
       is_production: true
 
 
