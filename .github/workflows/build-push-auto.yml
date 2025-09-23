@@ -84,8 +84,8 @@ jobs:
         id: get_new_image_tag
         env:
           CURRENT_IMAGE_TAG: ${{ steps.get_latest_image_tag.outputs.latest_tag_with_base_version }}
-          CURRENT_SOURCE_TAG: ${{ steps.get_latest_source_tag.outputs.current}}
-          IS_NEW_SOURCE_TAG: ${{ steps.compare_tags.outputs.is_greater_a}}
+          CURRENT_SOURCE_TAG: ${{ steps.get_latest_source_tag.outputs.current }}
+          IS_NEW_SOURCE_TAG: ${{ steps.compare_tags.outputs.is_greater_a }}
           IS_NEW_SOURCE_TAG_STABLE: ${{ steps.compare_tags.outputs.is_stable_a }}
           IS_NEW_IMAGE_BASE: ${{ steps.base_image_update_check.outputs.needs-updating }}
         run: |
@@ -145,8 +145,8 @@ jobs:
       registry: ${{ needs.build-push-envs.outputs.image_registry }}
       image_uri: ${{ needs.build-push-envs.outputs.image_uri }}
       source_host: ${{ needs.build-push-envs.outputs.source_host }}
-      source_repo_owner: ${{ needs.build-push-envs.outputs.source_repo_owner}}
-      source_repo_name: ${{ needs.build-push-envs.outputs.source_repo_name}}
+      source_repo_owner: ${{ needs.build-push-envs.outputs.source_repo_owner }}
+      source_repo_name: ${{ needs.build-push-envs.outputs.source_repo_name }}
       source_version_tag: ${{ needs.compare.outputs.current_source_tag }}
       new_version_tag: ${{ needs.compare.outputs.new_image_tag }}
       is_production: true

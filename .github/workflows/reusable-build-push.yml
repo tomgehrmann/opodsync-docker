@@ -34,7 +34,7 @@ on:
         default: false
         description: If true, the latest tag, major.minor and major.minor.patch will be set too.
 
-      
+
 jobs:    
   build-push:
     runs-on: ubuntu-22.04
