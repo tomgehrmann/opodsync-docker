@@ -17,6 +17,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Code Embedder
-        uses: kvankova/code-embedder@9e24446d895f07129ad1301b39fc78e354079f56
+        uses: kvankova/code-embedder@7c080d55a0aba10af2e67009b8b8fc9825f6ff96
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
