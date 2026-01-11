@@ -5,7 +5,7 @@ services:
     restart: on-failure:5
     user: ${PUID:-1000}:${PGID:-1000}
     security_opt:
-      - no-new-privileges
+      - "no-new-privileges=true"
       # - "apparmor=docker-opodsync" # optional hardening with AppArmor
     # read_only: true # needs evaluation: can't login if enabled
     mem_limit: 500MB
