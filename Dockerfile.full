@@ -1,0 +1,27 @@
+FROM dunglas/frankenphp:php8
+
+ARG USER=nonroot
+ARG USER_ID=65532
+
+ARG PATH_TO_APP="./source/server"
+ARG PATH_TO_CADDYFILE="./Caddyfile"
+
+ENV XDG_CONFIG_HOME="/caddy_config"
+ENV XDG_DATA_HOME="/caddy_data"
+
+# Add additional PHP extensions here
+RUN install-php-extensions ctype opcache session
+
+RUN \
+	useradd ${USER} -u ${USER_ID} -U; \
+	# Add additional capability to bind to port 80 and 443
+	setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp; \
+	# Give write access to /config/caddy and /data/caddy
+	chown -R ${USER}:${USER} ${XDG_CONFIG_HOME} ${XDG_DATA_HOME}
+
+RUN cp $PHP_INI_DIR/php.ini-production $PHP_INI_DIR/php.ini
+COPY "$PATH_TO_APP" /app
+COPY "$PATH_TO_CADDYFILE" /etc/frankenphp/Caddyfile
+
+WORKDIR /app
+USER ${USER}
