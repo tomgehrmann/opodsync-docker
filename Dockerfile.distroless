@@ -37,7 +37,7 @@ ARG PATH_TO_CADDYFILE="./Caddyfile"
 
 # Copy your app into /app
 # For further hardening make sure only writable paths are owned by the nonroot user
-COPY --chown=nonroot:nonroot "$PATH_TO_APP" /app
+COPY "$PATH_TO_APP" /app
 COPY "$PATH_TO_CADDYFILE" /etc/caddy/Caddyfile
 
 # Copy frankenphp and necessary libs
