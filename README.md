@@ -13,20 +13,27 @@ services:
     container_name: opodsync
     image: ghcr.io/tomgehrmann/opodsync:latest
     restart: on-failure:5
-    user: ${PUID:-1000}:${PGID:-1000}
     security_opt:
       - "no-new-privileges=true"
       # - "apparmor=docker-opodsync" # optional hardening with AppArmor
-    # read_only: true # needs evaluation: can't login if enabled
+    read_only: true
     mem_limit: 500MB
     cpus: 0.25
+    cap_add:
+      - CAP_NET_BIND_SERVICE
     cap_drop:
       - ALL
     ports:
       - "8080:8080"
+      # - "8443:8443" # TLS
+    # environment:
+    #   SERVER_NAME: ":8080 localhost:8443" # TLS
     volumes:
-      - ./data:/var/www/server/data:rw
-
+      - ./data:/app/data
+      - ./caddy_config:/caddy_config
+      - ./caddy_data:/caddy_data
+    tmpfs:
+      - /tmp # session data
 ```
 
 Copy the `config.dist.php` to `./data/config.local.php` on the host.
