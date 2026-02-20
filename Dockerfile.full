@@ -9,9 +9,6 @@ ARG PATH_TO_CADDYFILE="./Caddyfile"
 ENV XDG_CONFIG_HOME="/caddy_config"
 ENV XDG_DATA_HOME="/caddy_data"
 
-# Add additional PHP extensions here
-RUN install-php-extensions ctype opcache session
-
 RUN \
 	useradd ${USER} -u ${USER_ID} -U; \
 	# Add additional capability to bind to port 80 and 443

@@ -1,8 +1,5 @@
 FROM dunglas/frankenphp:php8-trixie AS builder
 
-# Add additional PHP extensions here
-RUN install-php-extensions ctype opcache session
-
 # Copy shared libs of frankenphp and all installed extensions to temporary location
 # You can also do this step manually by analyzing ldd output of frankenphp binary and each extension .so file
 RUN apt-get update && apt-get install -y libtree && \
