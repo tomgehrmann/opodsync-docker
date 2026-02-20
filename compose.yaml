@@ -1,10 +1,8 @@
 services:
-  app:
+  opodsync:
     container_name: opodsync
     image: ghcr.io/tomgehrmann/opodsync:latest
-    # image: opodsyncdocker:full
     restart: on-failure:5
-    # user: ${PUID:-1000}:${PGID:-1000}
     security_opt:
       - "no-new-privileges=true"
       # - "apparmor=docker-opodsync" # optional hardening with AppArmor
