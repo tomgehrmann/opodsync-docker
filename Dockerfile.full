@@ -16,6 +16,8 @@ RUN \
 	useradd ${USER} -u ${USER_ID} -U; \
 	# Add additional capability to bind to port 80 and 443
 	setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp; \
+	# Ensure XDG config and data directories exist before changing ownership
+	mkdir -p ${XDG_CONFIG_HOME} ${XDG_DATA_HOME}; \
 	# Give write access to /config/caddy and /data/caddy
 	chown -R ${USER}:${USER} ${XDG_CONFIG_HOME} ${XDG_DATA_HOME}
 
