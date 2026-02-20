@@ -1,0 +1,13 @@
+{$SERVER_NAME:":8080"} {
+	root * {$SERVER_ROOT:/app}
+
+	@blocked {
+		path /lib/* /data/* /templates/* /sql/*
+	}
+	respond @blocked 404
+
+	encode zstd br gzip
+	php_server {
+		try_files {path} index.php
+	}
+}
