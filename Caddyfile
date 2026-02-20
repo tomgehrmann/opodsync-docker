@@ -9,6 +9,5 @@
 	encode zstd br gzip
 	php_server {
 		try_files {path} index.php
-		root {$SERVER_ROOT:/app}
 	}
 }
