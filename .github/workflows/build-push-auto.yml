@@ -69,14 +69,14 @@ jobs:
 
       - name: Compare version tags
         id: compare_tags
-        uses: YunaBraska/semver-info-action@9878bfb06b973865ed1ccfce66402c159cf3fa48
+        uses: YunaBraska/semver-info-action@57beb44fe8104638d2e0281a54378db04aeaf50d
         with:
           semver-a: ${{ steps.get_latest_source_tag.outputs.current }}
           semver-b: ${{ steps.get_latest_image_tag.outputs.latest_tag_core }}
 
       - name: Check for Base Image Update
         id: base_image_update_check
-        uses: lucacome/docker-image-update-checker@a233de0585661c019fb71f9601328db37051cc66
+        uses: lucacome/docker-image-update-checker@abb0198839628faec8d4313bd92a0d6f58c9219e
         with:
           base-image: ${{ env.BASE_IMAGE }}
           image: ${{ env.IMAGE_URI }}:latest

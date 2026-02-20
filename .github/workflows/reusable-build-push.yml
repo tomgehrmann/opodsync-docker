@@ -48,12 +48,12 @@ jobs:
 
     steps:
       - name: Checkout ${{ inputs.source_repo_owner }}/${{ inputs.source_repo_name }}
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: ${{ inputs.source_repo_owner }}/${{ inputs.source_repo_name }}
           ref: ${{ inputs.source_version_tag }}
       - name: Checkout ${{ github.repository }}
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: ${{ github.repository }}
           path: docker
