@@ -29,7 +29,7 @@ services:
 
 ```
 
-Copy the `config.dist.php` to `data/config.local.php`.
+Copy the `config.dist.php` to `./data/config.local.php` on the host.
 
 ### Notes
 
