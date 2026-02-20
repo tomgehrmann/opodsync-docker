@@ -51,8 +51,8 @@ COPY --from=builder /usr/local/etc/php/php.ini-production /usr/local/etc/php/php
 
 # Create necessary caddy dirs
 # These dirs also need to be writable in case of a read-only root filesystem
-COPY --from=builder --chown=nonroot:nonroot /data/caddy /data/caddy
-COPY --from=builder --chown=nonroot:nonroot /config/caddy /config/caddy
+COPY --from=builder --chown=nonroot:nonroot /data/caddy ${XDG_DATA_HOME}
+COPY --from=builder --chown=nonroot:nonroot /config/caddy ${XDG_CONFIG_HOME}
 COPY --from=builder --chown=nonroot:nonroot /usr/local/share/ca-certificates/ /usr/local/share/ca-certificates/
 
 
