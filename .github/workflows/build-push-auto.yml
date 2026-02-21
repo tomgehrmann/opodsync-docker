@@ -12,7 +12,7 @@ env:
   IMAGE_REGISTRY: ghcr.io
   IMAGE_NAME: opodsync
   IMAGE_URI: ghcr.io/${{ github.repository_owner }}/opodsync # must match IMAGE_REGISTRY and IMAGE_NAME
-  BASE_IMAGE: dunglas/frankenphp:php8-trixie # must be the base image from the dockerfile
+  BASE_IMAGE: gcr.io/distroless/base-debian13:nonroot # must be the base image from the dockerfile
 
 jobs:
   compare:
