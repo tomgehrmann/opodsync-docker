@@ -27,7 +27,8 @@ jobs:
       current_source_tag: ${{ steps.get_latest_source_tag.outputs.tag }}
       new_image_tag: ${{ steps.get_new_image_tag.outputs.new_image_tag }}
       new_image_tag_suffix: ${{ steps.get_new_image_tag.outputs.new_image_tag_suffix }}
-      is_new_base_image: ${{ steps.base_image_update_check.outputs.needs-updating }}
+      # is_new_base_image: ${{ steps.base_image_update_check.outputs.needs-updating }} # FIXME
+      is_new_base_image: false
 
     steps:
       # Compare version tags
@@ -74,12 +75,13 @@ jobs:
           semver-a: ${{ steps.get_latest_source_tag.outputs.current }}
           semver-b: ${{ steps.get_latest_image_tag.outputs.latest_tag_core }}
 
-      - name: Check for Base Image Update
-        id: base_image_update_check
-        uses: lucacome/docker-image-update-checker@abb0198839628faec8d4313bd92a0d6f58c9219e
-        with:
-          base-image: ${{ env.BASE_IMAGE }}
-          image: ${{ env.IMAGE_URI }}:latest
+      # FIXME: Can't be used with gcr. See https://github.com/lucacome/docker-image-update-checker/issues/4
+      # - name: Check for Base Image Update
+      #   id: base_image_update_check
+      #   uses: lucacome/docker-image-update-checker@abb0198839628faec8d4313bd92a0d6f58c9219e
+      #   with:
+      #     base-image: ${{ env.BASE_IMAGE }}
+      #     image: ${{ env.IMAGE_URI }}:latest
 
       - name: Output new Image Tag
         id: get_new_image_tag
@@ -88,7 +90,8 @@ jobs:
           CURRENT_SOURCE_TAG: ${{ steps.get_latest_source_tag.outputs.current }}
           IS_NEW_SOURCE_TAG: ${{ steps.compare_tags.outputs.is_greater_a }}
           NEW_SOURCE_TAG_RC: ${{ steps.compare_tags.outputs.rc_source_tag }}
-          IS_NEW_IMAGE_BASE: ${{ steps.base_image_update_check.outputs.needs-updating }}
+          # IS_NEW_IMAGE_BASE: ${{ steps.base_image_update_check.outputs.needs-updating }} # FIXME
+          IS_NEW_IMAGE_BASE: false
         run: |
             # Decide which tag to use for the new image
             if [[ "$IS_NEW_SOURCE_TAG" == "true" && "$NEW_SOURCE_TAG_RC" == "" ]]; then
